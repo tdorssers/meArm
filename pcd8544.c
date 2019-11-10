@@ -4,6 +4,13 @@
  *
  * Created: 6-11-2019 18:05:15
  *  Author: Tim Dorssers
+ *
+ * Wiring:
+ * PB2 -> SCE
+ * PB3 -> DIN
+ * PB5 -> CLK
+ * PD4 -> D/C
+ * PD7 -> RST
  */ 
 
 #define F_CPU 16000000
@@ -181,24 +188,23 @@ void pcd8544_power(uint8_t on) {
 
 void pcd8544_set_pixel(uint8_t x, uint8_t y, uint8_t value) {
 	uint8_t *byte = &screen[y / 8 * 84 + x];
+	uint8_t bit = (1 << (y % 8));
 	if (value)
-		*byte |= (1 << (y % 8));
+		*byte |= bit;
 	else
-		*byte &= ~(1 << (y % 8));
+		*byte &= ~bit;
 }
 
 void pcd8544_write_char(char code, uint8_t scale) {
-	for (uint8_t x = 0; x < 5 * scale; x++)
-		for (uint8_t y = 0; y < 7 * scale; y++)
-			if (pgm_read_byte(&CHARSET[code - 32][x / scale]) & (1 << y / scale))
-				pcd8544_set_pixel(cursor_x + x, cursor_y + y, 1);
-			else
-				pcd8544_set_pixel(cursor_x + x, cursor_y + y, 0);
+	uint8_t x, y = 0;
+	for (x = 0; x < 5 * scale; x++)
+		for (y = 0; y < 7 * scale; y++)
+			pcd8544_set_pixel(cursor_x + x, cursor_y + y, pgm_read_byte(&CHARSET[code - 32][x / scale]) & (1 << y / scale));
 
-	cursor_x += 5 * scale + 1;
+	cursor_x += x + 1;
 	if (cursor_x >= 84) {
 		cursor_x = 0;
-		cursor_y += 7 * scale + 1;
+		cursor_y += y + 1;
 	}
 	if (cursor_y >= 48) {
 		cursor_x = 0;
@@ -226,7 +232,6 @@ void pcd8544_render(void) {
 	/* Set column and row to 0 */
 	write_cmd(0x80);
 	write_cmd(0x40);
-
 	/* Write screen to display */
 	for (uint16_t i = 0; i < sizeof(screen); i++)
 		write_data(screen[i]);

@@ -4,6 +4,8 @@
 ## Overview
 The controller board has a PCD8544-based LCD screen connected to the AVR hardware SPI pins and two 2-axis joystick modules connected to the AVR ADC pins to interface with the user. The PCD8544 driver supports font scaling and line drawing and sends all data at once using a screen buffer of 504 bytes in AVR RAM.
 Four SG90 servos are connected to two pins of PORTD and two pins of PORTB and are driven by a software PWM implementation using the 16-bit Timer1 output compare interrupt.
+The joystick buttons are used to save and restore servo positions.
+Debugging data is sent to the hardware UART.
 
 ## Hardware
 * Atmel ATmega8 @ 16 MHz
